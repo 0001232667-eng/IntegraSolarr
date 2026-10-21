@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solarneo | Monitoramento Solar</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TELA DE AUTENTICAÇÃO (LOGIN E CADASTRO) -->
+<div id="telaAuth" class="tela-auth">
+    <div class="auth-card">
+        <div class="auth-topo">
+            <h1>IntegraSolar</h1>
+            <p>Portal de Monitoramento Solar</p>
+        </div>
+
+        <div class="aba-login-cadastro">
+            <button id="btnAbaLogin" class="aba-btn ativo" onclick="alternarAbaAuth('login')">Entrar</button>
+            <button id="btnAbaCadastro" class="aba-btn" onclick="alternarAbaAuth('cadastro')">Criar Conta</button>
+        </div>
+
+        <!-- FORMULÁRIO DE LOGIN -->
+        <form id="formLogin" onsubmit="realizarLogin(event)">
+            <h2>Acessar o Sistema</h2>
+            <p class="descricao-auth">Digite seu e-mail e senha cadastrados para entrar.</p>
+            
+            <div class="campo-grupo">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" required>
+            </div>
+            <div class="campo-grupo">
+                <label>Senha</label>
+                <input type="password" id="loginSenha" placeholder="••••••••" required>
+            </div>
+            
+            <p id="loginErro" class="mensagem-erro"></p>
+            <p id="loginSucesso" class="mensagem-sucesso"></p>
+            <button type="submit" class="botao-principal largura-total">Entrar no Painel</button>
+        </form>
+
+        <!-- FORMULÁRIO DE CADASTRO -->
+        <form id="formCadastro" class="escondida" onsubmit="realizarCadastro(event)">
+            <h2>Criar Conta</h2>
+            <p class="descricao-auth">Preencha os dados abaixo para se cadastrar.</p>
+            
+            <div class="campo-grupo">
+                <label>Nome Completo ou Empresa</label>
+                <input type="text" id="cadNome" placeholder="Seu Nome ou Empresa" required>
+            </div>
+            <div class="campo-grupo">
+                <label>E-mail</label>
+                <input type="email" id="cadEmail" placeholder="seuemail@exemplo.com" required>
+            </div>
+            <div class="campo-grupo">
+                <label>Senha</label>
+                <input type="password" id="cadSenha" placeholder="Crie uma senha" required>
+            </div>
+            
+            <p id="cadErro" class="mensagem-erro"></p>
+            <button type="submit" class="botao-principal largura-total">Cadastrar Conta</button>
+        </form>
+    </div>
+</div>
+
+<!-- SISTEMA PRINCIPAL (LIBERADO APÓS O LOGIN) -->
+<div id="aplicacaoPrincipal" class="escondida">
+    <header class="topo">
+        <div>
+            <h1>IntegraSolar</h1>
+            <p>Monitoramento e Gestão de Energia Solar</p>
+        </div>
+        <div class="topo-direita">
+            <span class="status-topo">● Sistema Conectado</span>
+            <span id="badgeUsuario" class="usuario-badge">Conectado</span>
+            <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="menu">
+            <p class="menu-titulo">PAINEL PRINCIPAL</p>
+            <button class="menu-item ativo" onclick="abrirPagina('inicio', this)">Visão geral</button>
+            <button class="menu-item" onclick="abrirPagina('equipamentos', this)">Equipamentos</button>
+            <button class="menu-item" onclick="abrirPagina('historico', this)">Histórico</button>
+            <button class="menu-item" onclick="abrirPagina('alertas', this)">Alertas</button>
+            
+            <p class="menu-titulo">FERRAMENTAS</p>
+            <button class="menu-item" onclick="abrirPagina('esp32', this)">ESP32 / API</button>
+            <button class="menu-item" onclick="abrirPagina('economia', this)">Economia em R$</button>
+
+            <div class="menu-nota">
+                <strong>Banco de Dados Ativo</strong>
+                <p>Todas as contas e leituras estão salvas com segurança.</p>
+            </div>
+        </aside>
+
+        <main>
+            <!-- PÁGINA VISÃO GERAL -->
+            <section id="pagina-inicio" class="pagina">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">PAINEL DE CONTROLE</p>
+                        <h2>Visão geral</h2>
+                        <p class="descricao">Resumo da geração fotovoltaica e status da bateria.</p>
+                    </div>
+                    <button class="botao-principal" onclick="atualizarDados()"> Enviar Nova Leitura</button>
+                </div>
+
+                <div class="aviso">
+                    <strong>Armazenamento Ativo:</strong>
+                    <span>Todas as leituras geradas são gravadas de forma permanente no histórico.</span>
+                </div>
+
+                <section class="indicadores">
+                    <article class="cartao">
+                        <p>Potência solar</p>
+                        <strong id="potencia">1,85 kW</strong>
+                        <small>Potência gerada</small>
+                    </article>
+
+                    <article class="cartao">
+                        <p>Carga da bateria</p>
+                        <strong id="carga">78%</strong>
+                        <div class="barra">
+                            <span id="barraBateria" style="width:78%"></span>
+                        </div>
+                        <small id="textoCarga">Nível de carga</small>
+                    </article>
+
+                    <article class="cartao">
+                        <p>Tensão do inversor</p>
+                        <strong id="tensao">220 V</strong>
+                        <small>Tensão de saída</small>
+                    </article>
+
+                    <article class="cartao">
+                        <p>ESP32 Telemetria</p>
+                        <strong class="verde" id="estadoEsp">Ativo</strong>
+                        <small>Pronto para transmissão</small>
+                    </article>
+                </section>
+
+                <section class="duas-colunas">
+                    <article class="bloco">
+                        <div class="titulo-bloco">
+                            <div>
+                                <h3>Geração de energia</h3>
+                                <p>Métricas acumuladas</p>
+                            </div>
+                            <div class="acoes-grafico">
+                                <select id="periodoGrafico" onchange="desenharGrafico()">
+                                    <option value="dia">Hoje</option>
+                                    <option value="semana">Últimos 7 dias</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="grafico" class="grafico"></div>
+                        <p class="legenda-grafico">■ Energia gerada (kWh)</p>
+                    </article>
+
+                    <article class="bloco">
+                        <h3>Equipamentos</h3>
+
+                        <div class="equipamento">
+                            <span class="sigla">INV</span>
+                            <div>
+                                <strong>Inversor solar</strong>
+                                <small>Leitura de tensão e potência</small>
+                            </div>
+                        </div>
+
+                        <div class="equipamento">
+                            <span class="sigla">BAT</span>
+                            <div>
+                                <strong>Bateria</strong>
+                                <small id="resumoBateria">Carga em 78%</small>
+                            </div>
+                        </div>
+
+                        <div class="equipamento">
+                            <span class="sigla">ESP</span>
+                            <div>
+                                <strong>ESP32 Microcontrolador</strong>
+                                <small>Transmissão via Wi-Fi</small>
+                            </div>
+                        </div>
+
+                        <button class="botao-secundario largura-total" onclick="abrirPagina('equipamentos')">
+                            Ver equipamentos
+                        </button>
+                    </article>
+                </section>
+
+                <section class="bloco tabela-bloco">
+                    <h3>Últimas leituras enviadas</h3>
+                    <p class="descricao">Telemetria mais recente armazenada</p>
+
+                    <div class="tabela-responsiva">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Parâmetro</th>
+                                    <th>Valor</th>
+                                    <th>Origem</th>
+                                    <th>Horário</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaRecentes">
+                                <tr>
+                                    <td>Potência solar</td>
+                                    <td>1,85 kW</td>
+                                    <td>Inversor</td>
+                                    <td>--:--</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- PÁGINA EQUIPAMENTOS -->
+            <section id="pagina-equipamentos" class="pagina escondida">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">COMPONENTES</p>
+                        <h2>Equipamentos</h2>
+                        <p class="descricao">Componentes do sistema fotovoltaico.</p>
+                    </div>
+                </div>
+
+                <article class="bloco detalhe">
+                    <span class="sigla grande">INV</span>
+                    <div>
+                        <h3>Inversor Solar Off-Grid</h3>
+                        <p>Mede tensão de saída em Volts (V) e potência pico em kiloWatts (kW).</p>
+                    </div>
+                </article>
+
+                <article class="bloco detalhe">
+                    <span class="sigla grande">BAT</span>
+                    <div>
+                        <h3>Banco de Baterias</h3>
+                        <p>Permite mapear o armazenamento e indica quando o nível estiver crítico (&lt; 30%).</p>
+                    </div>
+                </article>
+
+                <article class="bloco detalhe">
+                    <span class="sigla grande">ESP</span>
+                    <div>
+                        <h3>ESP32 Microcontrolador</h3>
+                        <p>Coleta dados via sensores e os transmite via requisições HTTP POST para o servidor.</p>
+                    </div>
+                </article>
+            </section>
+
+            <!-- PÁGINA HISTÓRICO -->
+            <section id="pagina-historico" class="pagina escondida">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">REGISTROS DA EMPRESA</p>
+                        <h2>Histórico de Leituras</h2>
+                        <p class="descricao">Visualização, busca e exportação do relatório completo.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="botao-principal" onclick="exportarCSV()">Exportar CSV (Excel)</button>
+                        <button class="botao-secundario" onclick="limparHistorico()">Limpar Banco</button>
+                    </div>
+                </div>
+
+                <section class="bloco tabela-bloco">
+                    <div class="titulo-bloco" style="margin-bottom: 15px;">
+                        <div>
+                            <h3 style="margin: 0;">Buscar Registros</h3>
+                            <p id="contagemHistorico" class="descricao">0 registros encontrados</p>
+                        </div>
+                        <input type="text" id="filtroBusca" placeholder="Filtrar por horário, potência..." onkeyup="filtrarTabelaHistorico()">
+                    </div>
+
+                    <div class="tabela-responsiva">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Horário</th>
+                                    <th>Potência Solar</th>
+                                    <th>Carga Bateria</th>
+                                    <th>Tensão</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaHistorico"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <!-- PÁGINA ALERTAS -->
+            <section id="pagina-alertas" class="pagina escondida">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">MONITORAMENTO</p>
+                        <h2>Alertas e Ocorrências</h2>
+                        <p class="descricao">Avisos automáticos gerados a partir do histórico.</p>
+                    </div>
+                </div>
+
+                <section class="bloco" id="listaAlertas"></section>
+            </section>
+
+            <!-- PÁGINA ESP32 E API -->
+            <section id="pagina-esp32" class="pagina escondida">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">INTEGRAÇÃO HARDWARE</p>
+                        <h2>Central ESP32 &amp; API</h2>
+                        <p class="descricao">Simulador de pacote de dados e código para o microcontrolador.</p>
+                    </div>
+                </div>
+
+                <div class="duas-colunas">
+                    <article class="bloco">
+                        <h3>Simular Envio de Dados (HTTP POST)</h3>
+                        <p class="descricao" style="margin-bottom: 15px;">Teste como o ESP32 envia os dados para o sistema.</p>
+                        
+                        <div class="campo-grupo">
+                            <label>Potência (kW)</label>
+                            <input type="number" step="0.01" id="simPotencia" value="2.15">
+                        </div>
+                        <div class="campo-grupo">
+                            <label>Carga Bateria (%)</label>
+                            <input type="number" id="simCarga" value="85">
+                        </div>
+                        <div class="campo-grupo">
+                            <label>Tensão (V)</label>
+                            <input type="number" id="simTensao" value="220">
+                        </div>
+                        <button class="botao-principal largura-total" onclick="simularEnvioESP32()">Enviar Telemetria</button>
+                    </article>
+
+                    <article class="bloco">
+                        <h3>Código C++ para ESP32</h3>
+                        <p class="descricao">Programe seu ESP32 para mandar dados automaticamente:</p>
+<pre><code>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+
+void setup() {
+  WiFi.begin("SUA_REDE_WIFI", "SUA_SENHA");
+}
+
+void loop() {
+  if(WiFi.status() == WL_CONNECTED){
+    HTTPClient http;
+    http.begin("https://sua-api.com/api/leituras");
+    http.addHeader("Content-Type", "application/json");
+
+    String json = "{\"potencia\":1.85, \"carga\":78, \"tensao\":220}";
+    int response = http.POST(json);
+    http.end();
+  }
+  delay(10000); // Envia a cada 10s
+}</code></pre>
+                    </article>
+                </div>
+            </section>
+
+            <!-- PÁGINA ECONOMIA EM R$ -->
+            <section id="pagina-economia" class="pagina escondida">
+                <div class="cabecalho">
+                    <div>
+                        <p class="sobretitulo">CALCULADORA DE RETORNO</p>
+                        <h2>Economia Estimada em R$</h2>
+                        <p class="descricao">Acompanhe a redução de custos com o uso de energia fotovoltaica.</p>
+                    </div>
+                </div>
+
+                <div class="tres-colunas">
+                    <article class="cartao">
+                        <p>Economia Estimada (Mês)</p>
+                        <strong class="verde" id="ecoMes">R$ 380,00</strong>
+                        <small>Baseado na tarifa média (R$ 0,85/kWh)</small>
+                    </article>
+                    <article class="cartao">
+                        <p>Economia Acumulada (Ano)</p>
+                        <strong class="verde" id="ecoAno">R$ 4.560,00</strong>
+                        <small>Total em 12 meses</small>
+                    </article>
+                    <article class="cartao">
+                        <p>CO₂ Evitado</p>
+                        <strong id="co2Evitado">2,4 Toneladas</strong>
+                        <small>Sustentabilidade ambiental</small>
+                    </article>
+                </div>
+
+                <article class="bloco">
+                    <h3>Simulador de Tarifa</h3>
+                    <p class="descricao" style="margin-bottom: 15px;">Ajuste o valor do kWh da sua distribuidora para calcular a economia real da empresa.</p>
+                    <div style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="campo-grupo" style="margin: 0; flex: 1;">
+                            <label>Valor do kWh (R$)</label>
+                            <input type="number" step="0.01" id="valorKwh" value="0.85">
+                        </div>
+                        <button class="botao-principal" onclick="recalcularEconomia()">Recalcular</button>
+                    </div>
+                </article>
+            </section>
+
+            <footer>IntegraSolar— Gestão Inteligente e Monitoramento de Energia Fotovoltaica</footer>
+        </main>
+    </div>
+</div>
+
+<div id="notificacao" class="notificacao"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
